@@ -1,0 +1,43 @@
+서버 시작을 위해 작성해야 하는 기본 템플릿
+(서버 파일을 설정할 때 server.js로 설정했음)
+
+const express = require('express');
+const app = express();
+
+app.listen(8080, function(){
+    console.log('listening on 8080');
+});
+
+첫 두 둘은 express 라이브러리 첨부와 사용
+app.listen()은 원하는 포트에 서버를 오픈하는 문법이다.
+
+listen() 함수 안에는 두 개의 파라미터가 필요하다.
+listen(포트넘버, 콜백함수(서버오픈시실행할코드));
+
+get요청 처리하기
+요청하는 방식은 여러가지가 있다. 그중 제일 쉬운 방법은 url창에 직접 입력하는 방법이다.
+내 서버(8080)의 /pet 경로로 접속하면 안내메시지를 띄워주는 코드를 작성하자.
+
+app.get('/pet', function(req, res){
+    res.send('Hi this is pet shop!');
+});
+
+이후 localhost:8080/pet 에 접속하면
+위 문장이 출력된다. 접속 성공!
+
+# 매번 소스를 바꿀 때 마다 서버를 재시작하기는 너무 귀찮
+nodemon 패키지를 설치한다.
+npm install -g nodemon
+전역으로 설치할 경우(-g) 권한 에러가 발생한다. 맨 처음 sudo 추가시 해결
+
+get요청시 html 파일을 전송하기
+먼저 html 파일을 작성하고 server.js 파일에서 get 함수를 추가한다.
+
+app.get('/', function(req, res){
+    res.sendFile(__dirname + '/index.html');
+})
+
+누군가 /경로로 접속시(/ 경로는 홈페이지이다.)
+server.js와 같은 경로에 있는 /index.html 파일을 보내준다.
+sendFile() 함수를 쓰면 파일을 전송할 수 있다.
+__dirname은 현재 파일의 경로를 의미한다.
