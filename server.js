@@ -3,6 +3,8 @@ const app = express();
 const bodyParser = require("body-parser");
 app.use(express.urlencoded({ extended: true }));
 require("dotenv").config();
+const methodOverride = require("method-override");
+app.use(methodOverride("_method"));
 
 var db;
 const MongoClient = require("mongodb").MongoClient;
@@ -27,21 +29,45 @@ app.get("/beauty", function (req, res) {
     res.send("This is where you can buy beauty stuffs.");
 });
 app.get("/", function (req, res) {
-    res.sendFile(__dirname + "/index.html");
+    res.render(__dirname + "/views/index.ejs");
 });
 app.get("/write", function (req, res) {
-    res.sendFile(__dirname + "/write.html");
+    res.render(__dirname + "/views/write.ejs");
 });
 
 app.post("/add", function (req, res) {
-    db.collection("post").insertOne(
-        { title: req.body.title, date: req.body.date },
-        function (err, res) {
-            console.log("save complete!");
+    db.collection("counter").findOne(
+        { name: "게시물개수" },
+        function (err, result) {
+            console.log("result : " + result.totalPost);
+            var 총게시물개수 = result.totalPost;
+            db.collection("post").insertOne(
+                {
+                    _id: 총게시물개수 + 1,
+                    title: req.body.title,
+                    date: req.body.date,
+                },
+                function (err, res) {
+                    console.log("save complete!");
+                    db.collection("counter").updateOne(
+                        { name: "게시물개수" },
+                        { $inc: { totalPost: 1 } },
+                        function (err, result) {
+                            if (err) {
+                                return console.log(err);
+                            } else {
+                                return console.log(result);
+                            }
+                        }
+                    );
+                }
+            );
         }
     );
 
     res.send("send complete!");
+
+    // res.redirect("/write");
 
     console.log("title : " + req.body.title);
     console.log("date : " + req.body.date);
@@ -53,9 +79,48 @@ app.get("/list", function (req, res) {
     db.collection("post")
         .find()
         .toArray(function (err, result) {
-            console.log(result);
+            // console.log(result);
             res.render("list.ejs", { posts: result });
         });
 
-    console.log("complete");
+    // console.log("complete");
+});
+
+app.delete("/delete", function (req, res) {
+    console.log(req.body);
+    req.body._id = parseInt(req.body._id);
+    db.collection("post").deleteOne(req.body, function (err, result) {
+        console.log("삭제완료");
+        res.status(200).send({ message: "성공했습니다." });
+    });
+});
+
+app.get("/detail/:id", function (req, res) {
+    db.collection("post").findOne(
+        { _id: parseInt(req.params.id) },
+        function (err, result) {
+            console.log(result);
+            res.render("detail.ejs", { data: result });
+        }
+    );
+});
+
+app.get("/edit/:id", function (req, res) {
+    db.collection("post").findOne(
+        { _id: parseInt(req.params.id) },
+        function (err, result) {
+            res.render("edit.ejs", { post: result });
+        }
+    );
+});
+
+app.put("/edit", function (req, res) {
+    db.collection("post").updateOne(
+        { _id: parseInt(req.body.id) },
+        { $set: { title: req.body.title, date: req.body.date } },
+        function (err, result) {
+            console.log("수정완료");
+            res.redirect("/list");
+        }
+    );
 });

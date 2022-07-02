@@ -67,3 +67,154 @@ app.get('/list', function(req, res){
 res.render('list.ejs', {posts : result})
 .render() 함수에 둘째 파라미터를 적는다.
 list.ejs파일을 렌더링함과 동시에 {post:result}라는 데이터를 함깨 보낼 수 있다.
+
+_id 를 추가하여 저장하자
+_id 값이 있어야 삭제도 쉽고 수정도 쉽다.
+app.post('/add', function(req, res){
+	res.send('전송완료');
+	db.collection('post').insertOne({_id : 1, title: req.body.title, date : req.body.date }, function(){
+		console.log('save complete');
+	})
+})
+
+insertOne() 함수 안에 _id : 1 이라는 항목을 새로 써주면 아이디달아서 저장하기 완료
+
+하지만 1이라고 하드코딩을 했다.
+
+app.post('/add', function(req, res){
+	res.send('전송완료');
+	db.collection('post').insertOne({_id : 게시물개수 + 1}, function(){
+		console.log('save complete.');
+	})
+})
+
+이런식으로 하드코딩이 아니라 자동으로 증가하도록 코딩한다.
+
+
+DB 데이터를 수정하고 싶으면 updateOne을 사용한다.
+db.collection('counter').updateOne({수정할 데이터의 이름}, {수정치}, function(err, result){
+	console.log(result);
+})
+updateOne() 함수에는 3가지 파라미터가 필요하다.
+- 수정할 데이터 이름
+{name : '게시물개수'}
+- 수정치
+{$set : {totalPost : 100}} # 값을 100으로 변경
+{$inc : {totalPost : 1}} # 값을 1 증가
+$표시는 오퍼레이터다. 검색해서 필요한 오퍼레이터를 사용하도록 하자
+
+
+서버 요청에는 4가지 종류가 있다.
+get post put delete
+html에서는 put delete를 일반적으로 할 수 없다.
+
+삭제요청을 하려면 3가지 방법이 있다.
+1. method-override 라이브러리를 사용
+2. ajax로 delete 요청을 보낸다.
+3. post요청을 날려서 delete 요청을 처리한다.
+
+2번 방식을 사용하자
+
+ajax란 무엇인가?
+프론트엔드에서 jacascript를 이용해 서버에 여러가지 요청을 할 수 있는 문법이다.
+새로고침 없이도 서버에 요청을 할 수 있다.
+
+바닐라 자바스크립트로도 ajax가 가능하다.
+하지만 코드가 너무 길어지기 때문에 jquery를 설치한다.
+
+<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+jquery 스크립트 아래에 새로 스크립트를 열어서 ajax를 사용하자!
+
+<script>
+	$.ajax({
+		method : 'POST',
+		url : '/add',
+		data : '결혼하기'
+	})
+</script>
+
+/add 경로로 post 요청을 하는데 요청과 함께 '결혼하기' 라는 데이터를 보내주세요
+라는 코드다.
+
+언제 실행되냐면 script 태그 안에 그대로 넣으면 list.ejs 페이지를 방문할 때마다 바로 실행된다.
+하지만 새로고침 없이도 코드가 작동하기 때문에 요청이 성공했는지 실패했는지 모른다.
+
+<script>
+	$.ajax({
+		method : 'POST',
+		url : '/add',
+		data : '결혼하기'
+	}).done(function(result){
+		ajax 성공시 코드
+	}).fail(function(err){
+		ajax 실패시 코드
+	});
+</script>
+
+
+ajax로 delete 요청시 가장 중요한 내용이 있다.
+삭제를 원하는 게시물의 번호를 지정해야한다.
+
+<script>
+	$.ajax({
+		method : 'POST',
+		url : '/add',
+		data : {_id : 1} <- 이런식으로
+	}).done(function(result){
+		ajax 성공시 코드
+	}).fail(function(err){
+		ajax 실패시 코드
+	});
+</script>
+
+서버에서는
+app.delete('/delete', function(req, res){
+	db.collection('post').deleteOne(req.body, function(err, result){
+		console.log('delete complete');
+	})
+	res.send('delete complete');
+})
+
+deleteOne() 함수를 사용하면 삭제가 가능하다.
+deleteOne(삭제를 원하는 데이터, function(){})
+ajax요청시 data:{_id:1} 라고 적은 정보는 req.body에 담겨온다.
+이 정보를 deleteOne 에 집어넣으면 {_id : 1} 이라는 게시물을 삭제할 수 있다.
+
+##
+ajax 요청등으로 데이터를 서버에 전송할 때 숫자 자료들이 문자로 바껴서 올 때가 있다.
+이를 인트로 바꿔준다.
+req.body._id = parseInt(req.body._id);
+
+삭제 버튼을 눌렀을 때만 ajax요청을 하도록 하자
+$(".delete").click(function(e){
+	var tNum = e.target.dataset.id;
+
+	$.ajax({
+	method : 'DELETE',
+	url : '/delete',
+	data : {_id : tNum}
+	}).done(function(result){
+		console.log('done');
+	});
+});
+
+요청에 응답하기
+
+-res.send('<p>bla bla</p>')
+	간단한 문자나 html을 보낸다.
+-res.status(404).send('sorry we cannot find that')
+	응답코드를 보낸다.
+-res.sendFile('/upload/logo.png')
+	static 파일들을 보낸다
+-res.render('list.ejs', {data for the ejs})
+	ejs등의 템플릿이 적용된 페이지들을 렌더링할 수 있다.
+-res.json(jsonData)
+	제이슨 데이터를 담아보낸다.
+
+
+ajax 요청 성공 또는 실패시 특정 코드 실행하기
+데이터가 오거나 200코드가 오면 성공
+데이터가 안 오거나 400, 500코드가 오면 실패시
+성공이나 실패시 각각 기능을 실행하려면 done 또는 fail 함수를 이용
+
+
