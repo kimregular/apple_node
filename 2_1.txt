@@ -175,9 +175,33 @@ app.delete('/delete', function(req, res){
 	res.send('delete complete');
 })
 
+/delete 경로로 DELETE 요청을 하면 코드를 실행시킨다.
+
+
+AJAX로 DELETE 요청시 가장 중요한 내용은 원하는 게시물을 삭제할 수 있도록 
+삭제 원하는 게시물의 번호를 전송하는 것이다.
+
+$.ajax({
+	method : 'DELETE',
+	url : '/delete',
+	data : {_id : 1}
+}).done(function(result){
+	~~~~
+})
+
+data : {} 부분에 삭제를 원하는 게시물 아이디를 적어 보낸다.
+서버의 경우를 살펴보자
+
+app.delete('/delete', function(req, res){
+	db.collection('post').deleteOne(req.body, function(err, result){
+		console.log('delete complete');
+	})
+	res.send('delete complete');
+});
+
 deleteOne() 함수를 사용하면 삭제가 가능하다.
 deleteOne(삭제를 원하는 데이터, function(){})
-ajax요청시 data:{_id:1} 라고 적은 정보는 req.body에 담겨온다.
+++ ajax요청시 data:{_id:1} 라고 적은 정보는 req.body에 담겨온다. ++
 이 정보를 deleteOne 에 집어넣으면 {_id : 1} 이라는 게시물을 삭제할 수 있다.
 
 ##
@@ -198,6 +222,31 @@ $(".delete").click(function(e){
 	});
 });
 
+_id : 1 이라고 하드코딩을 했기 때문에 1번 게시물만 삭제할 수 있다.
+버튼을 눌렀을 때 해당되는 게시물을 삭제할 수 있도록 코드를 수정하자
+
+<script>
+	$('.delete').click(function(){
+		$.ajax({
+			method : 'delete',
+			url : '/delete',
+			data : {_id : 지금 클릭한 삭제버튼의 글번호}
+		}).done(function(result){
+			~~~
+		})
+	})
+</script>
+
+{_id : 1} 이런식이 아니라 지금 누른 삭제 버튼의 번호를 집어넣을 수 있도록 한다.
+이런 방식을 사용하려면 버튼마다 미리 번호를 주어야한다.
+<button> 태그에 data-id 라는 속성을 추가한다.
+data-id 의 값을 <%= posts[i]._id %> 로 지정한다.
+
+data : {_id : 지금 클릭한 삭제버튼의 글번호} 부분은
+위 데이터를 참조하여
+data : {_id : e.target.dataset.id}
+
+
 요청에 응답하기
 
 -res.send('<p>bla bla</p>')
@@ -212,9 +261,102 @@ $(".delete").click(function(e){
 	제이슨 데이터를 담아보낸다.
 
 
+
+
 ajax 요청 성공 또는 실패시 특정 코드 실행하기
 데이터가 오거나 200코드가 오면 성공
 데이터가 안 오거나 400, 500코드가 오면 실패시
 성공이나 실패시 각각 기능을 실행하려면 done 또는 fail 함수를 이용
+
+<script>
+	$('delete').click(function(){
+		$.ajax({
+			method : 'DELETE',
+			url : '/delete',
+			data : { _id : e.target.dataset.id }
+		}).done((result)=>{
+			// ajax 성공시 실행할 코드
+		}).faul((xhr, code, err)=>{
+			// ajax 실패시 실행할 코드
+		});
+	});
+</script>
+
+(function 대신 => 써도 똑같다.)
+fail 함수 내분의 3개 파라미터는 차례로 jquery의 
+XMLHttpRequest, error code, error message
+를 의미한다.
+
+
+상세페이지를 만들어보자
+누군가 detail/3 으로 접속하면 3번 게시물 데이터를 보여주고
+누군가 detail/4 으로 접속하면 4번 게시물 데이터를 보여준다.
+
+app.get('post', function(req, res){
+	res.render('detail.ejs', {3번 게시물데이터})
+});
+
+app.get('post', function(req, res){
+	res.render('detail.ejs', {4번 게시물데이터})
+});
+app.get{~~}을 100개 만들면 처리된다.
+
+100개 만들기가 힘들다면 파라미터 문법을 사용한다.
+
+app.get('/detail/:id', function(req,res){
+	res.render('detail.ejs', {~~})
+});
+
+url 자리에 :(콜론)을 붙여주면 누군가 /detail/ 뒤에 아무 문자열이나 입력하면~ 이라는 뜻이다.
+이제 사용자가 /detail/ 뒤에 어떤 숫자나 문자를 붙이든 위의 코드 3줄로 인식할 수 있다.
+
+# : 뒤에는 자유롭게 작멍이 가능하다. id가 좋아서 그냥 한거임
+(파라미터를 두 개 이상 이어붙일 수도 있다.)
+
+detail/2 로 방문하면 2번 게시물을 보내야한다.
+-> detail/2로 방문하면 _id 가 2인 게시물을 db에서 찾아야한다.
+
+app.get('/detail/:id', function(req, res){
+	db.collection('post').findOne({ _id : URL에 입력한id값 }, function(err, result){
+		res.render('detail.ejs', {~~~})
+	});
+});
+
+findOne() 함수를 사용해서 _id = 2인 게시물을 db에서 찾아낸다.
+.findOne({원하는게시물정보}, function(){완료시 실행할 코드}); 식이다.
+
+이 코드에 사용자가 URL에 입력한 :id 값을 그대로 넣어주면 된다.
+req.params.id 라고 치면 된다. (구글로 검색)
+
+app.get('/delete/:id', function(req, res){
+	db.collection('post').findOne({ _id : req.params.id}, function(err, result){
+		res.render('detail.ejs', { data : result} );
+	})
+})
+셋 째 줄에서 db에서 찾은 결과를 data 라는 이름으로 ejs파일로 보내고 있다.
+ejs 파일 내에서 그 게시물 데이터를 가지고 html에 넣을 수 있다.
+
+하지만 req.params.id 는 String 타입이기 때문에 int 형으로 바꿔줘야한다.
+parseInt(req.params.id) 로 처리하면 int 형으로 자료가 넘어간다.
+
+이제 ejs 파일로 넘어간 데이터를 ejs에서 출력하도록 코딩하자
+
+<h4> 제목 : <%= data.title %> </h4>
+<h4> 날짜 : <%= data.date %> </h4>
+식으로 ejs에서 파일을 출력한다.
+
+
+html 조립식 개발하기
+
+html 파일이 많은데 공통 요소가 있다면 그 요소를 따로 저장해서 다른 html 파일로 불러올 수 있다.
+
+공통 요소 파일을 만들어서 part.html로 저장한다. (이름은 맘대로)
+공통 요소가 들어갈 자리에
+<%- include('part.html') %> 를 입력한다.
+
+이 방식은 html에서는 안되고 ejs파일에서만 사용할 수 있다.
+다른 모든 html 파일들을 모두 ejs로 바꾸고 server.js의 url을 수정하는 방식으로 수정하자
+불러올 때는 res.render() 함수를 사용해야한다.
+
 
 

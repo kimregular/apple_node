@@ -13,24 +13,24 @@
             crossorigin="anonymous"
         />
 
-        <title>ToDo : Write</title>
+        <title>ToDo : Login</title>
     </head>
     <body>
         <%- include('nav.ejs') %>
 
         <h4 class="mt-4 text-center">
-            <strong>Write</strong>
+            <strong>Login</strong>
         </h4>
 
         <div class="container">
-            <form action="/add" method="POST">
+            <form action="/login" method="POST">
                 <div class="form-group">
-                    <label>오늘의 할일</label>
-                    <input type="text" class="form-control" name="title" />
+                    <label>ID</label>
+                    <input type="text" class="form-control" name="id" />
                 </div>
                 <div class="form-group">
-                    <label>날짜</label>
-                    <input type="text" class="form-control" name="date" />
+                    <label>Password</label>
+                    <input type="password" class="form-control" name="pw" />
                 </div>
                 <button type="submit" class="btn btn-danger mt-4">
                     Submit

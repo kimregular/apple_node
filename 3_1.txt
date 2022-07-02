@@ -1,0 +1,93 @@
+수정 페이지 만들기
+
+edit.ejs 파일을 만든다.
+write.ejs 와 비슷하다.
+
+다른점이라면 input 요소에 value 속성값을 줘야한다. 
+(수정이니까 수정 전 값을 보여줄 수 있도록)
+
+누군가 /edit으로 접속하면 edit.ejs 로 보내줘야한다.
+
+app.get('/edit', function(req, res){
+    res.render('edit.ejs'));
+})
+
+이제 edit으로 접속하면 edit.ejs 파일을 보내고 렌더링해준다.
+
+이전과 같이 게시물마다 모두 내용이 달라야한다.
+
+/edit/2로 접속하면 2번 게시물을 수정할 수 있도록
+/edit/3으로 접속하면 3번 게시물을 수정할 수 있도록
+
+app.get('eidt/:id', function(req, res){
+    res.render('edit.ejs', { db에 있던 :id번 게시물의 제목과 날짜 });
+});
+
+1. 경로를 일단 /edit/:id 로 수정한다. 이렇게 하면 누군가 /edit/ 뒤에 뭐라고 적던 일단 edit.ejs 파일을 렌더링한다.
+2. /edit/2 로 접속하면 db에 있던 2번 게시물의 제목과 날짜를 ejs 파일로 보내야한다.
+    그래야 input 태그의 value 속성에 해당 값을 보낼 수 있기 때문이다.
+
+app.get('/edit/:id', function(req, res){
+    db.collection('post').findOne( { _id : parseInt(req.params.id) }, function(err, result){
+        res.render('edit.ejs', { post : result });
+    });
+});
+
+결과값이 이제 post라는 이름으로 edit.ejs 파일에 보내진다.
+
+이제 edit.ejs에서 전송버튼을 누르면 수정(put) 요청을 해야한다.
+html method는 put과 delete를 지원하지 않는다.
+
+이전처럼 ajax로 해결하던가 라이브러리를 설치한다.(method-override)
+
+method-override 라이브러리를 사용하려면 아래와 같이 코드를 server.js 파일 상단에 입력한다.
+const methodOverride = require('method-override');
+app.use(methodOverride('_method'))
+
+이후 edit.ejs 파일 form태그의 속성값을
+<form   action = "/edit?_method=PUT" method="POST">
+    ~~~~
+</form>
+수정하면
+폼 전송시 /edit 경로로 put 요청을 해준다.
+
+서버에는 /edit 경로로 put 요청을 했을 때 코드를 작성한다.
+
+app.put('/edit', function(req, res){
+    DB데이터를 수정해주세요
+})
+
+이런식의 코드를 작성하면 된다.
+
+app.put('/edit', function(req, res){
+    db.collection('post').updateOne( {_id : ?}, { $set : { title : ??, date : ?? }}, function(err, result){
+        console.log('modify complete');
+    });
+})
+
+몽고db에서는 updateOne() 함수를 사용할 수 있다.
+updateOne(  1. 업데이트할게시물,
+            2. 수정할내용,
+            3. 콜백함수);
+식으로 사용하면 된다.
+
+1을 처리하기 위해서 기존 게시물의 _id를 작성해준다.
+2는 $set 오퍼레이터를 사용한다. 기존 값을 수정/추가 해준다.
+3콜백함수는 업데이트 완료시 실행할 코드를 적는다.
+
+app.put('/edit', function(req, res){
+    db.collection('post').updateOne(    { _id : req.body._id}, // 1
+                                        { $set : { title : req.body.title, date : req.body.date }}, // 2
+                                        function(err, result){ // 3
+        console.log('modify complete');
+    })
+})
+
+사용자가 form 전송시 함께 요청한 id를 req.body.id 이런식으로 꺼내 쓸 수 있다.
+(id는 input에 부여한 name 속성 값이다.)
+
+추가로 parseInt(req.body.id)로 자료형을 int로 바꿔준다.
+
+성공이든 실패든 서버에서는 응답을 해줘야한다.
+마지막으로 res.redirect('/list')로 화면을 전환한다.
+
