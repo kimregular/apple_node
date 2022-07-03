@@ -13,19 +13,21 @@
             crossorigin="anonymous"
         />
 
-        <title>ToDo : List</title>
+        <title>ToDo : Search</title>
     </head>
     <body>
         <%- include('nav.ejs') %>
 
         <h4 class="mt-4 text-center">
-            <strong>List</strong>
+            <strong>Search Result</strong>
         </h4>
 
         <div class="container input-group mb-2">
-            <input class="form-control" id="search-input">
-            <button class="input-group-append btn btn-danger" id="search">검색</button>
+            <input class="form-control" id="search-input" placeholder="search again">
+            <button class="input-group-append btn btn-danger" id="search" >검색</button>
         </div>
+
+        
         <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
         <script>
             $('#search').click(function(){
@@ -54,7 +56,7 @@
 
         
 
-       
+      
         <script>
             
             $('.delete').click(function(e){

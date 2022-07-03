@@ -1,0 +1,19 @@
+.env 파일에서 민감한 환경변수들 관리하기
+
+환경에 따라 가변적인 변수 데이터들을 환경변수라고 부른다.
+
+환경변수를 한곳에 모아 관리하는게 편하다.
+.env 파일을 만들어 관리하자
+
+1. 환경변수 사용을 위한 라이브러리를 설치한하.
+npm install dotenv
+2. server.js에 라이브러리 등록
+require('dotenv').config()
+3. server.js와 같은 경로에 .env 파일을 만든다.
+4. 내부에 대문자로 환경변수들을 모두 다 적고 저장한다.
+
+exp) PORT = 8080
+
+server.js로 환경변수 불러오기
+process.env.변수이름 형식으로 환경변수를 불러올 수 있다.
+exp) process.env.PORT
